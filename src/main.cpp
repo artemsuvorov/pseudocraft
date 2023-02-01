@@ -1,58 +1,41 @@
 #include <iostream>
+#include <array>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "core/application.h"
 
-int main(void)
+class Pseudocraft : public Application
 {
-    GLFWwindow* window;
-
-    /* Initialize the library */
-    if (!glfwInit()) 
+protected:
+    virtual void OnInit()
     {
-        std::cout << "Failed to init the GLFW library." << std::endl;
-        return -1;
+        std::array<float, 6> postions = 
+        {
+            -0.5f, -0.5f,
+            0.0f,  0.5f,
+            0.5f, -0.5f
+        };
+        uint32_t size = 6 * sizeof(float);
+
+        uint32_t buffer;
+        glGenBuffers(1, &buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glBufferData(GL_ARRAY_BUFFER, size, &postions, GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
-    if (!window)
+    virtual void OnRender()
     {
-        glfwTerminate();
-        std::cout << "Failed to create the window." << std::endl;
-        return -1;
+        glDrawArrays(GL_TRIANGLES, 0, 3);   
     }
+};
 
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }  
-
-    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
-
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // glBegin(GL_TRIANGLES);
-        // glVertex2d(-0.5f, -0.5f);
-        // glVertex2d( 0.0f,  0.5f);
-        // glVertex2d( 0.5f, -0.5f);
-        // glEnd();
-
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
-
-        /* Poll for and process events */
-        glfwPollEvents();
-    }
-
-    glfwTerminate();
+int main()
+{
+    Pseudocraft app;
+    app.Start();
     return 0;
 }
