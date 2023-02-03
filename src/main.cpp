@@ -6,6 +6,9 @@
 
 class Pseudocraft : public Application
 {
+private:
+    uint32_t shader;
+
 protected:
     virtual void OnInit()
     {
@@ -44,16 +47,21 @@ protected:
             "\n"
             "void main()\n"
             "{\n"
-            "   color = vec4(0.0, 0.0, 1.0, 1.0);\n"
+            "   color = vec4(0.0, 1.0, 0.0, 1.0);\n"
             "}\n";
 
-        uint32_t shader = CreateShader(vertrexShader, fragmentShader);
+        shader = CreateShader(vertrexShader, fragmentShader);
         glUseProgram(shader);
     }
 
     virtual void OnRender()
     {
         glDrawArrays(GL_TRIANGLES, 0, 3);   
+    }
+
+    virtual void OnDestroy()
+    {
+        glDeleteProgram(shader);
     }
 };
 

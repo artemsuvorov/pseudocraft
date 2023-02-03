@@ -30,6 +30,8 @@ void Application::Start()
         /* Poll for and process events */
         glfwPollEvents();
     }
+
+    OnDestroy();
 }
 
 void Application::InitializeGlfw()
