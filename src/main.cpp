@@ -31,9 +31,6 @@ protected:
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         ShaderSource source = ParseShader("res/shaders/blue.shader");
-        std::cout << "VERTEX SHADER" << source.VertexSource << std::endl;
-        std::cout << "FRAGMENT SAHD" << source.FragmentSource << std::endl;
-
         shader = CreateShader(source.VertexSource, source.FragmentSource);
         glUseProgram(shader);
     }
