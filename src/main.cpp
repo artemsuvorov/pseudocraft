@@ -1,6 +1,7 @@
 #include <iostream>
 #include <array>
 
+#include "core/log.h"
 #include "core/application.h"
 #include "graphics/shader.h"
 
@@ -32,34 +33,34 @@ protected:
         uint32_t indexSize = 6 * sizeof(uint32_t);
 
         uint32_t buffer;
-        glGenBuffers(1, &buffer);
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), &postions, GL_STATIC_DRAW);
+        GL_CALL(glGenBuffers(1, &buffer));
+        GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, buffer));
+        GL_CALL(glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), &postions, GL_STATIC_DRAW));
 
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+        GL_CALL(glEnableVertexAttribArray(0));
+        GL_CALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0));
 
         uint32_t indexBufferObject;
-        glGenBuffers(1, &indexBufferObject);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferObject);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexSize, &indices, GL_STATIC_DRAW);
+        GL_CALL(glGenBuffers(1, &indexBufferObject));
+        GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferObject));
+        GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexSize, &indices, GL_STATIC_DRAW));
 
-        // glBindBuffer(GL_ARRAY_BUFFER, 0);
+        // GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
 
         ShaderSource source = ParseShader("res/shaders/blue.shader");
         shader = CreateShader(source.VertexSource, source.FragmentSource);
-        glUseProgram(shader);
+        GL_CALL(glUseProgram(shader));
     }
 
     virtual void OnRender()
     {
-        // glDrawArrays(GL_TRIANGLES, 0, 6);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        // GL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
+        GL_CALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
     }
 
     virtual void OnDestroy()
     {
-        glDeleteProgram(shader);
+        GL_CALL(glDeleteProgram(shader));
     }
 };
 
