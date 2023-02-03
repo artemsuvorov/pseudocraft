@@ -2,6 +2,7 @@
 #include <array>
 
 #include "core/application.h"
+#include "graphics/shader.h"
 
 class Pseudocraft : public Application
 {
@@ -25,6 +26,29 @@ protected:
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        std::string vertrexShader =
+            "#version 330 core\n"
+            "\n"
+            "layout(location = 0) in vec4 position;\n"
+            "\n"
+            "void main()\n"
+            "{\n"
+            "   gl_Position = position;\n"
+            "}\n";
+
+        std::string fragmentShader =
+            "#version 330 core\n"
+            "\n"
+            "layout(location = 0) out vec4 color;\n"
+            "\n"
+            "void main()\n"
+            "{\n"
+            "   color = vec4(0.0, 0.0, 1.0, 1.0);\n"
+            "}\n";
+
+        uint32_t shader = CreateShader(vertrexShader, fragmentShader);
+        glUseProgram(shader);
     }
 
     virtual void OnRender()
