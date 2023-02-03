@@ -30,27 +30,11 @@ protected:
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        std::string vertrexShader =
-            "#version 330 core\n"
-            "\n"
-            "layout(location = 0) in vec4 position;\n"
-            "\n"
-            "void main()\n"
-            "{\n"
-            "   gl_Position = position;\n"
-            "}\n";
+        ShaderSource source = ParseShader("res/shaders/blue.shader");
+        std::cout << "VERTEX SHADER" << source.VertexSource << std::endl;
+        std::cout << "FRAGMENT SAHD" << source.FragmentSource << std::endl;
 
-        std::string fragmentShader =
-            "#version 330 core\n"
-            "\n"
-            "layout(location = 0) out vec4 color;\n"
-            "\n"
-            "void main()\n"
-            "{\n"
-            "   color = vec4(0.0, 1.0, 0.0, 1.0);\n"
-            "}\n";
-
-        shader = CreateShader(vertrexShader, fragmentShader);
+        shader = CreateShader(source.VertexSource, source.FragmentSource);
         glUseProgram(shader);
     }
 
