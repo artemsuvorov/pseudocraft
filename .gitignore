@@ -69,3 +69,6 @@ Thumbs.db
 *.layout
 *.depend
 obj/
+
+# VS Code
+.vscode/
