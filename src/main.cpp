@@ -3,6 +3,8 @@
 
 #include "core/log.h"
 #include "core/application.h"
+
+#include "graphics/graphics.h"
 #include "graphics/shader.h"
 
 class Pseudocraft : public Application
@@ -13,39 +15,24 @@ private:
 protected:
     virtual void OnInit()
     {
-        std::array<float, 8> postions = 
-        {
-            -0.5f, -0.5f,
-             0.5f, -0.5f,
-             0.5f,  0.5f,
-
-            //  0.5f,  0.5f,
-            -0.5f,  0.5f,
-            // -0.5f, -0.5f,
+        std::array<float, 8> postions = {
+            -0.5f, -0.5f, // 0
+             0.5f, -0.5f, // 1
+             0.5f,  0.5f, // 2
+            -0.5f,  0.5f, // 3
         };
-        uint32_t positionSize = 8 * sizeof(float);
         
-        std::array<uint32_t, 6> indices =
-        {
+        std::array<uint32_t, 6> indices = {
             0, 1, 2,
             2, 3, 0
         };
-        uint32_t indexSize = 6 * sizeof(uint32_t);
 
-        uint32_t buffer;
-        GL_CALL(glGenBuffers(1, &buffer));
-        GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, buffer));
-        GL_CALL(glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), &postions, GL_STATIC_DRAW));
+        uint32_t buffer = SelectBuffer(GL_ARRAY_BUFFER, postions, GL_STATIC_DRAW);
 
         GL_CALL(glEnableVertexAttribArray(0));
         GL_CALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0));
 
-        uint32_t indexBufferObject;
-        GL_CALL(glGenBuffers(1, &indexBufferObject));
-        GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferObject));
-        GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexSize, &indices, GL_STATIC_DRAW));
-
-        // GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+        uint32_t indexBufferObject = SelectBuffer(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 
         ShaderSource source = ParseShader("res/shaders/blue.shader");
         shader = CreateShader(source.VertexSource, source.FragmentSource);
