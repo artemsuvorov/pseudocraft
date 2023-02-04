@@ -1,6 +1,9 @@
 #pragma once
 
 #include <iostream>
+#include <sstream>
+#include <iomanip>
+
 #include <glad/glad.h>
 
 #define ASSERT(errorcode) if ((errorcode) > 0) exit(errorcode);
