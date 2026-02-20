@@ -74,9 +74,26 @@ else()
     set(GLFW_TARGET glfw)
 endif()
 
+# GLM handling
+find_package(glm QUIET)
+if(NOT glm_FOUND)
+    message(STATUS "GLM not found locally, fetching from GitHub...")
+    include(FetchContent)
+    FetchContent_Declare(
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG 1.0.1
+    )
+    FetchContent_MakeAvailable(glm)
+    set(GLM_TARGET glm::glm)
+else()
+    set(GLM_TARGET glm::glm)
+endif()
+
 target_link_libraries(${PROJECT_NAME}
     OpenGL::GL
     ${GLFW_TARGET}
+    ${GLM_TARGET}
 )
 
 if(WIN32)
