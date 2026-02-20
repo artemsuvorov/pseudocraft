@@ -34,6 +34,7 @@ private:
 
     void InitializeGlfw();
     void CreateGlfwWindow();
+    void RegisterGlfwCallbacks();
     void InitializeGlad();
     void TerminateGlfw();
 

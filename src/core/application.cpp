@@ -22,6 +22,7 @@ void Application::Start()
 {
     InitializeGlfw();
     CreateGlfwWindow();
+    RegisterGlfwCallbacks();
     InitializeGlad();
 
     OnInit();
@@ -66,6 +67,7 @@ void Application::CreateGlfwWindow()
     {
         /* Make the window's context current */
         glfwMakeContextCurrent(m_Window);
+        glfwSetWindowUserPointer(m_Window, this);
         return;
     }
 
@@ -84,6 +86,19 @@ void Application::InitializeGlad()
 
     std::cout << "Failed to initialize GLAD" << std::endl;
     exit(ERROR_CODE_FAILURE);
+}
+
+void Application::RegisterGlfwCallbacks()
+{
+    glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int32_t width, int32_t height)
+    {
+        if (Application* app = (Application*)glfwGetWindowUserPointer(window))
+        {
+            app->m_WindowWidth = width;
+            app->m_WindowHeight = height;
+        }
+        glViewport(0, 0, width, height);
+    });
 }
 
 void Application::TerminateGlfw()
