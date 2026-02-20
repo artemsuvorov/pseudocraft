@@ -2,10 +2,11 @@
 #version 330 core
 
 layout(location = 0) in vec4 position;
+uniform float u_Aspect;
 
 void main()
 {
-   gl_Position = position;
+   gl_Position = vec4(position.x / u_Aspect, position.y, 0.0, 1.0);
 }
 
 #shader fragment

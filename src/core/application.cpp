@@ -1,7 +1,16 @@
+#include <iostream>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <assert.h>
+
 #include "application.h"
 
-Application::Application()
+
+Application::Application(const char* title, int32_t width, int32_t height)
 {
+    m_Title = title;
+    m_WindowWidth = width;
+    m_WindowHeight = height;
 }
 
 Application::~Application()
@@ -18,14 +27,14 @@ void Application::Start()
     OnInit();
 
     /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(m_Window))
     {
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
         OnRender();
 
         /* Swap front and back buffers */
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(m_Window);
 
         /* Poll for and process events */
         glfwPollEvents();
@@ -45,13 +54,16 @@ void Application::InitializeGlfw()
 
 void Application::CreateGlfwWindow()
 {
+    assert(m_Title && std::strlen(m_Title) > 0);
+    assert(m_WindowWidth > 0 && m_WindowHeight > 0);
+
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Pseudocraft", nullptr, nullptr);
-    
-    if (window) 
+    m_Window = glfwCreateWindow(m_WindowWidth, m_WindowHeight, m_Title, nullptr, nullptr);
+
+    if (m_Window)
     {
         /* Make the window's context current */
-        glfwMakeContextCurrent(window);
+        glfwMakeContextCurrent(m_Window);
         return;
     }
 

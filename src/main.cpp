@@ -9,6 +9,10 @@
 
 class Pseudocraft : public Application
 {
+public:
+    Pseudocraft(const char* title, int32_t w, int32_t h) : Application(title, w, h) {}
+    virtual ~Pseudocraft() = default;
+
 protected:
     virtual void OnInit()
     {
@@ -44,6 +48,10 @@ protected:
         m_Shader = CreateShader(source.VertexSource, source.FragmentSource);
         GL_CALL(glUseProgram(m_Shader));
 
+        // Get uniform and set aspect ratio of the Window
+        int32_t aspect = glGetUniformLocation(m_Shader, "u_Aspect");
+        glUniform1f(aspect, (float)m_WindowWidth / (float)m_WindowHeight);
+
         GL_CALL(glBindVertexArray(0));
     }
 
@@ -70,7 +78,6 @@ private:
 
 int main()
 {
-    Pseudocraft app;
+    Pseudocraft app{ "Pseudocraft", 1200, 800 };
     app.Start();
-    return 0;
 }
