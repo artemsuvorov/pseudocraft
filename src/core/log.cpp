@@ -1,11 +1,11 @@
 #include "log.h"
 
-const char* hex(uint32_t number)
+std::string hex(uint32_t number)
 {
     const uint32_t WIDTH = 4;
     std::ostringstream output;
     output << "0x" << std::setw(WIDTH) << std::setfill('0') << std::hex << number;
-    return output.str().c_str();
+    return output.str();
 }
 
 void GlClearErrorStack()
