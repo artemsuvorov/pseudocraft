@@ -24,15 +24,41 @@ add_executable(${PROJECT_NAME})
 # Set working directory to project root for debugging
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 
+# Include directories (if you have headers outside src, like include/)
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 
+# Collect all source files (cpp, c) and header files (h, hpp) recursively from src/
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c")
-target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
+file(GLOB_RECURSE HEADERS "src/*.h" "src/*.hpp" "src/*.hxx" "src/*.inl")
 
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "Source Files" FILES ${SOURCES})
+# Add sources and headers to the target
+target_sources(${PROJECT_NAME} PRIVATE ${SOURCES} ${HEADERS})
 
+# Organise source files in Visual Studio to mirror the src/ folder structure
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src 
+             PREFIX "Source Files" 
+             FILES ${SOURCES})
+
+# Organise header files under "Header Files" with the same folder structure
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src 
+             PREFIX "Header Files" 
+             FILES ${HEADERS})
+
+# Add resource files (from res/) to the project (as header-only so they don't get compiled)
+file(GLOB_RECURSE RESOURCES "res/*")
+if(RESOURCES)
+    target_sources(${PROJECT_NAME} PRIVATE ${RESOURCES})
+    # Mark each resource file as header-only to avoid compilation
+    set_source_files_properties(${RESOURCES} PROPERTIES HEADER_FILE_ONLY TRUE)
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/res 
+                 PREFIX "Resource Files" 
+                 FILES ${RESOURCES})
+endif()
+
+# Find OpenGL
 find_package(OpenGL REQUIRED)
 
+# GLFW handling
 find_package(glfw3 QUIET)
 if(NOT glfw3_FOUND)
     message(STATUS "GLFW not found locally, fetching from GitHub...")
