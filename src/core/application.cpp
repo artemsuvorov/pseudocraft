@@ -29,6 +29,8 @@ void Application::Start()
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(m_Window))
     {
+        OnUpdate();
+
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
         OnRender();

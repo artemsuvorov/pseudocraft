@@ -1,11 +1,17 @@
-#include <iostream>
+﻿#include <iostream>
 #include <array>
+
+#include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "core/log.h"
 #include "core/application.h"
 
 #include "graphics/graphics.h"
 #include "graphics/shader.h"
+
 
 class Pseudocraft : public Application
 {
@@ -16,16 +22,32 @@ public:
 protected:
     virtual void OnInit()
     {
-        std::array<float, 8> positions = {
-            -0.5f, -0.5f, // 0
-             0.5f, -0.5f, // 1
-             0.5f,  0.5f, // 2
-            -0.5f,  0.5f, // 3
+        std::array positions = {
+            // front face (z = +0.5)
+            -0.5f, -0.5f,  0.5f,  // 0
+             0.5f, -0.5f,  0.5f,  // 1
+             0.5f,  0.5f,  0.5f,  // 2
+            -0.5f,  0.5f,  0.5f,  // 3
+            // back face (z = -0.5)
+            -0.5f, -0.5f, -0.5f,  // 4
+             0.5f, -0.5f, -0.5f,  // 5
+             0.5f,  0.5f, -0.5f,  // 6
+            -0.5f,  0.5f, -0.5f   // 7
         };
         
-        std::array<uint32_t, 6> indices = {
-            0, 1, 2,
-            2, 3, 0
+        std::array indices = {
+            // front face
+            0, 1, 2,  2, 3, 0,
+            // back face
+            4, 6, 5,  6, 4, 7,   // note: reversed order because of orientation (counter‑clockwise)
+            // left face
+            4, 0, 3,  3, 7, 4,
+            // right face
+            1, 5, 6,  6, 2, 1,
+            // top face
+            3, 2, 6,  6, 7, 3,
+            // bottom face
+            4, 5, 1,  1, 0, 4,
         };
 
         // Create and bind a Vertex Array Object (VAO)
@@ -38,27 +60,54 @@ protected:
 
         // Define the layout of the vertex data (position attribute)
         GL_CALL(glEnableVertexAttribArray(0));
-        GL_CALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0));
+        GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0));
 
         // Create and fill the Element Buffer Object (EBO)
         m_IndexBuffer = SelectBuffer(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 
         // Load and compile shaders, then use the program
-        ShaderSource source = ParseShader("res/shaders/blue.shader");
+        ShaderSource source = ParseShader("res/shaders/cube.shader");
         m_Shader = CreateShader(source.VertexSource, source.FragmentSource);
         GL_CALL(glUseProgram(m_Shader));
 
-        // Get uniform and set aspect ratio of the Window
-        int32_t aspect = glGetUniformLocation(m_Shader, "u_Aspect");
-        glUniform1f(aspect, (float)m_WindowWidth / (float)m_WindowHeight);
+        GL_CALL(glEnable(GL_DEPTH_TEST));
+        GL_CALL(glEnable(GL_CULL_FACE));
 
         GL_CALL(glBindVertexArray(0));
     }
 
+    virtual void OnUpdate()
+    {
+        constexpr float fov = glm::radians(45.0f);
+        const float aspect = (float)m_WindowWidth / m_WindowHeight;
+        const float znear = 0.1f, zfar = 100.0f;
+
+        // Update rotation angle
+        m_Cube.Angle += 0.01f;
+
+        // Calculate view projection matrices
+        glm::mat4 model = glm::rotate(glm::mat4(1.0f), m_Cube.Angle, m_Cube.Axis);
+        glm::mat4 view = glm::lookAt(
+            glm::vec3(2.0f, 2.0f, 2.0f),  // camera position
+            glm::vec3(0.0f, 0.0f, 0.0f),  // look at origin
+            glm::vec3(0.0f, 1.0f, 0.0f)   // up vector
+        );
+        glm::mat4 projection = glm::perspective(fov, aspect, znear, zfar);
+        glm::mat4 mvp = projection * view * model;
+
+        // Upload to shader
+        GL_CALL(glUseProgram(m_Shader));
+        int32_t umvp = glGetUniformLocation(m_Shader, "u_ViewProjection");
+        GL_CALL(glUniformMatrix4fv(umvp, 1, GL_FALSE, glm::value_ptr(mvp)));
+        int32_t color = glGetUniformLocation(m_Shader, "u_Color");
+        GL_CALL(glUniform3f(color, m_Cube.Color.r, m_Cube.Color.g, m_Cube.Color.b));
+    }
+
     virtual void OnRender()
     {
+        GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GL_CALL(glBindVertexArray(m_VertexArray));
-        GL_CALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+        GL_CALL(glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr));
     }
 
     virtual void OnDestroy()
@@ -70,6 +119,12 @@ protected:
     }
 
 private:
+    struct Cube {
+        float Angle = 0.0f;
+        glm::vec3 Axis = glm::vec3(0.5f, 1.0f, 0.3f);
+        glm::vec3 Color = glm::vec3(0.2f, 0.2f, 0.2f);
+    } m_Cube;
+
     uint32_t m_Shader = 0;
     uint32_t m_VertexArray = 0;
     uint32_t m_VertexBuffer = 0;
