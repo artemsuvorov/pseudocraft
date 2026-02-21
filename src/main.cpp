@@ -11,6 +11,7 @@
 
 #include "graphics/graphics.h"
 #include "graphics/shader.h"
+#include "graphics/texture.h"
 
 
 struct Camera
@@ -36,30 +37,50 @@ protected:
     {
         std::array positions = {
             // front face (z = +0.5)
-            -0.5f, -0.5f,  0.5f,  // 0
-             0.5f, -0.5f,  0.5f,  // 1
-             0.5f,  0.5f,  0.5f,  // 2
-            -0.5f,  0.5f,  0.5f,  // 3
+            -0.5f, -0.5f,  0.5f,   0.0f, 0.0f, // 0
+             0.5f, -0.5f,  0.5f,   1.0f, 0.0f, // 1
+             0.5f,  0.5f,  0.5f,   1.0f, 1.0f, // 2
+            -0.5f,  0.5f,  0.5f,   0.0f, 1.0f, // 3
             // back face (z = -0.5)
-            -0.5f, -0.5f, -0.5f,  // 4
-             0.5f, -0.5f, -0.5f,  // 5
-             0.5f,  0.5f, -0.5f,  // 6
-            -0.5f,  0.5f, -0.5f   // 7
+            -0.5f, -0.5f, -0.5f,   0.0f, 0.0f, // 4
+             0.5f, -0.5f, -0.5f,   1.0f, 0.0f, // 5
+             0.5f,  0.5f, -0.5f,   1.0f, 1.0f, // 6
+            -0.5f,  0.5f, -0.5f,   0.0f, 1.0f, // 7
+            // left face (x = -0.5)
+            -0.5f, -0.5f, -0.5f,   0.0f, 0.0f, // 8  (duplicate of 4)
+            -0.5f, -0.5f,  0.5f,   1.0f, 0.0f, // 9  (duplicate of 0)
+            -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, // 10 (duplicate of 3)
+            -0.5f,  0.5f, -0.5f,   0.0f, 1.0f, // 11 (duplicate of 7)
+            // right face (x = +0.5)
+             0.5f, -0.5f, -0.5f,   0.0f, 0.0f, // 12 (duplicate of 5)
+             0.5f, -0.5f,  0.5f,   1.0f, 0.0f, // 13 (duplicate of 1)
+             0.5f,  0.5f,  0.5f,   1.0f, 1.0f, // 14 (duplicate of 2)
+             0.5f,  0.5f, -0.5f,   0.0f, 1.0f, // 15 (duplicate of 6)
+            // top face (y = +0.5)
+            -0.5f,  0.5f, -0.5f,   0.0f, 0.0f, // 16 (duplicate of 7)
+             0.5f,  0.5f, -0.5f,   1.0f, 0.0f, // 17 (duplicate of 6)
+             0.5f,  0.5f,  0.5f,   1.0f, 1.0f, // 18 (duplicate of 2)
+            -0.5f,  0.5f,  0.5f,   0.0f, 1.0f, // 19 (duplicate of 3)
+            // bottom face (y = -0.5)
+            -0.5f, -0.5f, -0.5f,   0.0f, 0.0f, // 20 (duplicate of 4)
+             0.5f, -0.5f, -0.5f,   1.0f, 0.0f, // 21 (duplicate of 5)
+             0.5f, -0.5f,  0.5f,   1.0f, 1.0f, // 22 (duplicate of 1)
+            -0.5f, -0.5f,  0.5f,   0.0f, 1.0f, // 23 (duplicate of 0)
         };
         
         std::array indices = {
             // front face
             0, 1, 2,  2, 3, 0,
             // back face
-            4, 6, 5,  6, 4, 7,   // note: reversed order because of orientation (counter‑clockwise)
+            4, 6, 5,  6, 4, 7,
             // left face
-            4, 0, 3,  3, 7, 4,
+            8, 9, 10, 10, 11, 8,
             // right face
-            1, 5, 6,  6, 2, 1,
-            // top face
-            3, 2, 6,  6, 7, 3,
-            // bottom face
-            4, 5, 1,  1, 0, 4,
+            12, 14, 13, 14, 12, 15,
+            // top face    (outward normal +y)
+            16, 18, 17, 16, 19, 18,
+            // bottom face (outward normal -y)
+            20, 21, 22, 20, 22, 23
         };
 
         // Create and bind a Vertex Array Object (VAO)
@@ -70,9 +91,13 @@ protected:
         // Create and fill the Vertex Buffer Object (VBO)
         m_Graphics.VertexBuffer = SelectBuffer(GL_ARRAY_BUFFER, positions, GL_STATIC_DRAW);
 
-        // Define the layout of the vertex data (position attribute)
+        // Define the layout of the vertex data
+        // Position attribute
         GL_CALL(glEnableVertexAttribArray(0));
-        GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0));
+        GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0));
+        // UV attribute
+        GL_CALL(glEnableVertexAttribArray(1));
+        GL_CALL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))));
 
         // Create and fill the Element Buffer Object (EBO)
         m_Graphics.IndexBuffer = SelectBuffer(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
@@ -80,11 +105,18 @@ protected:
         // Load and compile shaders, then use the program
         ShaderSource source = ParseShader("res/shaders/cube.shader");
         m_Graphics.Shader = CreateShader(source.VertexSource, source.FragmentSource);
+
+        // Load textures
+        m_Graphics.Texture = CreateTexture("res/textures/grasstop.png");
+
         GL_CALL(glUseProgram(m_Graphics.Shader));
 
         // Fetch uniform locations
         m_Uniforms.ViewProjection = glGetUniformLocation(m_Graphics.Shader, "u_ViewProjection");
-        m_Uniforms.Color = glGetUniformLocation(m_Graphics.Shader, "u_Color");
+        m_Uniforms.Texture = glGetUniformLocation(m_Graphics.Shader, "u_Texture");
+
+        // Upload texture to shader (0 = GL_TEXTURE0)
+        GL_CALL(glUniform1i(m_Uniforms.Texture, 0));
 
         GL_CALL(glEnable(GL_DEPTH_TEST));
         GL_CALL(glEnable(GL_CULL_FACE));
@@ -104,15 +136,13 @@ protected:
         glm::mat4 projection = glm::perspective(fov, aspect, 0.1f, 100.0f);
         // View matrix
         glm::mat4 view = glm::lookAt(m_Camera.Pos, m_Camera.Pos + m_Camera.Dir, m_Camera.Up);
-        // Cube rotation
-        m_Cube.Angle += 0.01f;
-        glm::mat4 model = glm::rotate(glm::mat4(1.0f), m_Cube.Angle, m_Cube.Axis);
+        // Cube rotation (disabled for now)
+        glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 mvp = projection * view * model;
 
         // Upload to shader
         GL_CALL(glUseProgram(m_Graphics.Shader));
         GL_CALL(glUniformMatrix4fv(m_Uniforms.ViewProjection, 1, GL_FALSE, glm::value_ptr(mvp)));
-        GL_CALL(glUniform3f(m_Uniforms.Color, m_Cube.Color.r, m_Cube.Color.g, m_Cube.Color.b));
     }
 
     void UpdateCamera()
@@ -150,12 +180,15 @@ protected:
     virtual void OnRender()
     {
         GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+        GL_CALL(glActiveTexture(GL_TEXTURE0));
+        GL_CALL(glBindTexture(GL_TEXTURE_2D, m_Graphics.Texture.Index));
         GL_CALL(glBindVertexArray(m_Graphics.VertexArray));
         GL_CALL(glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr));
     }
 
     virtual void OnDestroy()
     {
+        GL_CALL(glDeleteTextures(1, &m_Graphics.Texture.Index));
         GL_CALL(glDeleteProgram(m_Graphics.Shader));
         GL_CALL(glDeleteVertexArrays(1, &m_Graphics.VertexArray));
         GL_CALL(glDeleteBuffers(1, &m_Graphics.VertexBuffer));
@@ -175,6 +208,7 @@ private:
     struct Graphics
     {
         uint32_t Shader = 0;
+        Texture Texture;
         uint32_t VertexArray = 0;
         uint32_t VertexBuffer = 0;
         uint32_t IndexBuffer = 0;
@@ -183,7 +217,7 @@ private:
     struct Uniforms
     {
         int32_t ViewProjection = -1;
-        int32_t Color = -1;
+        int32_t Texture = -1;
     } m_Uniforms;
 };
 
