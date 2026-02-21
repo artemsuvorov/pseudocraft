@@ -90,6 +90,18 @@ else()
     set(GLM_TARGET glm::glm)
 endif()
 
+# STB Image (header-only)
+include(FetchContent)
+FetchContent_Declare(
+    stb
+    GIT_REPOSITORY https://github.com/nothings/stb.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(stb)
+
+# Add the STB headers to the include path
+target_include_directories(${PROJECT_NAME} PRIVATE ${stb_SOURCE_DIR})
+
 target_link_libraries(${PROJECT_NAME}
     OpenGL::GL
     ${GLFW_TARGET}
