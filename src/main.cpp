@@ -116,8 +116,9 @@ protected:
     void UpdateCamera()
     {
         // Update rotation angles yaw and pitch
-        m_Camera.Yaw = m_Camera.Yaw + m_MouseDeltaX * m_Camera.Sens;
-        m_Camera.Pitch = glm::clamp(m_Camera.Pitch + m_MouseDeltaY * m_Camera.Sens, -89.0f, +89.0f);
+        glm::vec2 delta = m_Input.GetMouseDelta();
+        m_Camera.Yaw = m_Camera.Yaw + delta.x * m_Camera.Sens;
+        m_Camera.Pitch = glm::clamp(m_Camera.Pitch + delta.y * m_Camera.Sens, -89.0f, +89.0f);
 
         // Update front vector based on yaw and pitch
         glm::vec3 front;
@@ -127,9 +128,9 @@ protected:
         m_Camera.Dir = glm::normalize(front);
 
         // Update camera position
-        float forwardInput = (float)(m_Keys[GLFW_KEY_W]) - (float)(m_Keys[GLFW_KEY_S]);
-        float sideInput = (float)(m_Keys[GLFW_KEY_D]) - (float)(m_Keys[GLFW_KEY_A]);
-        float upInput = (float)(m_Keys[GLFW_KEY_SPACE]) - (float)(m_Keys[GLFW_KEY_LEFT_SHIFT]);
+        float forwardInput = (float)(m_Input.IsKeyPressed(GLFW_KEY_W)) - (float)(m_Input.IsKeyPressed(GLFW_KEY_S));
+        float sideInput = (float)(m_Input.IsKeyPressed(GLFW_KEY_D)) - (float)(m_Input.IsKeyPressed(GLFW_KEY_A));
+        float upInput = (float)(m_Input.IsKeyPressed(GLFW_KEY_SPACE)) - (float)(m_Input.IsKeyPressed(GLFW_KEY_LEFT_SHIFT));
         glm::vec3 forward = m_Camera.Dir;
         glm::vec3 side = glm::normalize(glm::cross(m_Camera.Dir, m_Camera.Up));
         glm::vec3 up = m_Camera.Up;
@@ -140,7 +141,7 @@ protected:
 
     virtual void OnKeyboardEvent(int32_t key, int32_t action)
     {
-        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        if (m_Input.IsKeyPressed(GLFW_KEY_ESCAPE))
             Close();
     }
 

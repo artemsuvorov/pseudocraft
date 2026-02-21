@@ -1,6 +1,8 @@
 #include <iostream>
 #include <assert.h>
 
+#include <glad/glad.h>
+
 #include "application.h"
 
 
@@ -46,7 +48,7 @@ void Application::Start()
         glfwSwapBuffers(m_Window);
 
         /* Reset mouse's delta */
-        m_MouseDeltaX = m_MouseDeltaY = 0.0;
+        m_Input.ResetMouse();
     }
 
     OnDestroy();
@@ -118,19 +120,7 @@ void Application::RegisterGlfwCallbacks()
     {
         if (Application* app = (Application*)glfwGetWindowUserPointer(window))
         {
-            if (app->m_FirstMouse)
-            {
-                app->m_MouseX = x;
-                app->m_MouseY = y;
-                app->m_FirstMouse = false;
-            }
-            else
-            {
-                app->m_MouseDeltaX = x - app->m_MouseX;
-                app->m_MouseDeltaY = app->m_MouseY - y; // reversed Y
-                app->m_MouseX = x;
-                app->m_MouseY = y;
-            }
+            app->m_Input.UpdateMouse(x, y);
             app->OnMouseEvent(x, y);
         }
     });
@@ -141,10 +131,7 @@ void Application::RegisterGlfwCallbacks()
         {
             if (key >= 0 && key <= GLFW_KEY_LAST)
             {
-                if (action == GLFW_PRESS)
-                    app->m_Keys[key] = true;
-                else if (action == GLFW_RELEASE)
-                    app->m_Keys[key] = false;
+                app->m_Input.UpdateKeys(key, action);
                 app->OnKeyboardEvent(key, action);
             }
         }

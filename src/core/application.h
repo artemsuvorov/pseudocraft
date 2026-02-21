@@ -1,7 +1,6 @@
 #pragma once
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "input.h"
 
 
 // Forwards.
@@ -37,11 +36,7 @@ protected:
  
     float m_DeltaTime = 0.0f;
     float m_LastTime = 0.0f;
-
-    bool m_Keys[GLFW_KEY_LAST + 1] = { false };
-    float m_MouseX = 0.0, m_MouseY = 0.0;
-    float m_MouseDeltaX = 0.0, m_MouseDeltaY = 0.0;
-    bool m_FirstMouse = true;
+    Input m_Input;
 
     GLFWwindow* m_Window = nullptr;
 
