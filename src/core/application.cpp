@@ -1,6 +1,4 @@
 #include <iostream>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <assert.h>
 
 #include "application.h"
@@ -30,6 +28,14 @@ void Application::Start()
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(m_Window))
     {
+        /* Update delta time */
+        float currentFrame = (float)glfwGetTime();
+        m_DeltaTime = currentFrame - m_LastTime;
+        m_LastTime = currentFrame;
+
+        /* Poll for and process events */
+        glfwPollEvents();
+
         OnUpdate();
 
         /* Render here */
@@ -39,8 +45,8 @@ void Application::Start()
         /* Swap front and back buffers */
         glfwSwapBuffers(m_Window);
 
-        /* Poll for and process events */
-        glfwPollEvents();
+        /* Reset mouse's delta */
+        m_MouseDeltaX = m_MouseDeltaY = 0.0;
     }
 
     OnDestroy();
@@ -67,6 +73,9 @@ void Application::CreateGlfwWindow()
     {
         /* Make the window's context current */
         glfwMakeContextCurrent(m_Window);
+        /* Disable cursor and capture it */
+        glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        /* Set up User pointer to this instance of the App */
         glfwSetWindowUserPointer(m_Window, this);
         return;
     }
@@ -98,6 +107,42 @@ void Application::RegisterGlfwCallbacks()
             app->m_WindowHeight = height;
         }
         glViewport(0, 0, width, height);
+    });
+
+    glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double x, double y)
+    {
+        if (Application* app = (Application*)glfwGetWindowUserPointer(window))
+        {
+            if (app->m_FirstMouse)
+            {
+                app->m_MouseX = x;
+                app->m_MouseY = y;
+                app->m_FirstMouse = false;
+            }
+            else
+            {
+                app->m_MouseDeltaX = x - app->m_MouseX;
+                app->m_MouseDeltaY = app->m_MouseY - y; // reversed Y
+                app->m_MouseX = x;
+                app->m_MouseY = y;
+            }
+            app->OnMouseEvent(x, y);
+        }
+    });
+
+    glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t mods)
+    {
+        if (Application* app = (Application*)glfwGetWindowUserPointer(window))
+        {
+            if (key >= 0 && key <= GLFW_KEY_LAST)
+            {
+                if (action == GLFW_PRESS)
+                    app->m_Keys[key] = true;
+                else if (action == GLFW_RELEASE)
+                    app->m_Keys[key] = false;
+                app->OnKeyboardEvent(key, action);
+            }
+        }
     });
 }
 

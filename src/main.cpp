@@ -13,6 +13,18 @@
 #include "graphics/shader.h"
 
 
+struct Camera
+{
+    glm::vec3 Pos = glm::vec3(2.0f, 2.0f, 2.0f);
+    glm::vec3 Dir = glm::vec3(-0.577f, -0.577f, -0.577f); // normalized direction from pos to origin initially
+    glm::vec3 Up  = glm::vec3(0.0f, 1.0f, 0.0f);
+    float Yaw     = -135.0f;      // degrees, so that initial Front points approximately to origin
+    float Pitch   = -35.0f;       // degrees
+    float Sens    = 0.1f;         // rotation sensitivity
+    float Speed   = 2.5f;         // movement speed (units per second)
+};
+
+
 class Pseudocraft : public Application
 {
 public:
@@ -82,17 +94,15 @@ protected:
         const float aspect = (float)m_WindowWidth / m_WindowHeight;
         const float znear = 0.1f, zfar = 100.0f;
 
-        // Update rotation angle
-        m_Cube.Angle += 0.01f;
+        UpdateCamera();
 
-        // Calculate view projection matrices
+        // Projection matrix
+        glm::mat4 projection = glm::perspective(fov, aspect, 0.1f, 100.0f);
+        // View matrix
+        glm::mat4 view = glm::lookAt(m_Camera.Pos, m_Camera.Pos + m_Camera.Dir, m_Camera.Up);
+        // Cube rotation
+        m_Cube.Angle += 0.01f;
         glm::mat4 model = glm::rotate(glm::mat4(1.0f), m_Cube.Angle, m_Cube.Axis);
-        glm::mat4 view = glm::lookAt(
-            glm::vec3(2.0f, 2.0f, 2.0f),  // camera position
-            glm::vec3(0.0f, 0.0f, 0.0f),  // look at origin
-            glm::vec3(0.0f, 1.0f, 0.0f)   // up vector
-        );
-        glm::mat4 projection = glm::perspective(fov, aspect, znear, zfar);
         glm::mat4 mvp = projection * view * model;
 
         // Upload to shader
@@ -101,6 +111,31 @@ protected:
         GL_CALL(glUniformMatrix4fv(umvp, 1, GL_FALSE, glm::value_ptr(mvp)));
         int32_t color = glGetUniformLocation(m_Shader, "u_Color");
         GL_CALL(glUniform3f(color, m_Cube.Color.r, m_Cube.Color.g, m_Cube.Color.b));
+    }
+
+    void UpdateCamera()
+    {
+        // Update rotation angles yaw and pitch
+        m_Camera.Yaw = m_Camera.Yaw + m_MouseDeltaX * m_Camera.Sens;
+        m_Camera.Pitch = glm::clamp(m_Camera.Pitch + m_MouseDeltaY * m_Camera.Sens, -89.0f, +89.0f);
+
+        // Update front vector based on yaw and pitch
+        glm::vec3 front;
+        front.x = cos(glm::radians(m_Camera.Yaw)) * cos(glm::radians(m_Camera.Pitch));
+        front.y = sin(glm::radians(m_Camera.Pitch));
+        front.z = sin(glm::radians(m_Camera.Yaw)) * cos(glm::radians(m_Camera.Pitch));
+        m_Camera.Dir = glm::normalize(front);
+
+        // Update camera position
+        float forwardInput = (float)(m_Keys[GLFW_KEY_W]) - (float)(m_Keys[GLFW_KEY_S]);
+        float sideInput = (float)(m_Keys[GLFW_KEY_D]) - (float)(m_Keys[GLFW_KEY_A]);
+        float upInput = (float)(m_Keys[GLFW_KEY_SPACE]) - (float)(m_Keys[GLFW_KEY_LEFT_SHIFT]);
+        glm::vec3 forward = m_Camera.Dir;
+        glm::vec3 side = glm::normalize(glm::cross(m_Camera.Dir, m_Camera.Up));
+        glm::vec3 up = m_Camera.Up;
+        glm::vec3 movement = forwardInput * forward + sideInput * side + upInput * up;
+        if (glm::length(movement) > 0.0f)
+            m_Camera.Pos += glm::normalize(movement) * m_Camera.Speed * m_DeltaTime;
     }
 
     virtual void OnRender()
@@ -119,6 +154,8 @@ protected:
     }
 
 private:
+    Camera m_Camera;
+
     struct Cube {
         float Angle = 0.0f;
         glm::vec3 Axis = glm::vec3(0.5f, 1.0f, 0.3f);

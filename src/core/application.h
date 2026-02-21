@@ -1,5 +1,8 @@
 #pragma once
 
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 
 // Forwards.
 struct GLFWwindow;
@@ -24,14 +27,24 @@ protected:
     virtual void OnRender() = 0;
     virtual void OnDestroy() = 0;
 
+    virtual void OnMouseEvent(float x, float y) {}
+    virtual void OnKeyboardEvent(int32_t key, int32_t action) {}
+
     const char* m_Title = nullptr;
     int32_t m_WindowWidth = 0;
     int32_t m_WindowHeight = 0;
+ 
+    float m_DeltaTime = 0.0f;
+    float m_LastTime = 0.0f;
+
+    bool m_Keys[GLFW_KEY_LAST + 1] = { false };
+    float m_MouseX = 0.0, m_MouseY = 0.0;
+    float m_MouseDeltaX = 0.0, m_MouseDeltaY = 0.0;
+    bool m_FirstMouse = true;
 
     GLFWwindow* m_Window = nullptr;
 
 private:
-
     void InitializeGlfw();
     void CreateGlfwWindow();
     void RegisterGlfwCallbacks();
