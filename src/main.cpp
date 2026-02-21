@@ -138,6 +138,12 @@ protected:
             m_Camera.Pos += glm::normalize(movement) * m_Camera.Speed * m_DeltaTime;
     }
 
+    virtual void OnKeyboardEvent(int32_t key, int32_t action)
+    {
+        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+            Close();
+    }
+
     virtual void OnRender()
     {
         GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));

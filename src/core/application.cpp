@@ -52,6 +52,11 @@ void Application::Start()
     OnDestroy();
 }
 
+void Application::Close()
+{
+    glfwSetWindowShouldClose(m_Window, true);
+}
+
 void Application::InitializeGlfw()
 {
     /* Initialize the library */

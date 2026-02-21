@@ -20,6 +20,7 @@ public:
     Application& operator=(Application&&) = delete;
 
     void Start();
+    void Close();
 
 protected:
     virtual void OnInit() = 0;
