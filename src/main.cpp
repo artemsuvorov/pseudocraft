@@ -64,23 +64,27 @@ protected:
 
         // Create and bind a Vertex Array Object (VAO)
         // In modern OpenGL, a VAO must be bound before setting vertex attributes.
-        GL_CALL(glGenVertexArrays(1, &m_VertexArray));
-        GL_CALL(glBindVertexArray(m_VertexArray));
+        GL_CALL(glGenVertexArrays(1, &m_Graphics.VertexArray));
+        GL_CALL(glBindVertexArray(m_Graphics.VertexArray));
 
         // Create and fill the Vertex Buffer Object (VBO)
-        m_VertexBuffer = SelectBuffer(GL_ARRAY_BUFFER, positions, GL_STATIC_DRAW);
+        m_Graphics.VertexBuffer = SelectBuffer(GL_ARRAY_BUFFER, positions, GL_STATIC_DRAW);
 
         // Define the layout of the vertex data (position attribute)
         GL_CALL(glEnableVertexAttribArray(0));
         GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0));
 
         // Create and fill the Element Buffer Object (EBO)
-        m_IndexBuffer = SelectBuffer(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
+        m_Graphics.IndexBuffer = SelectBuffer(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 
         // Load and compile shaders, then use the program
         ShaderSource source = ParseShader("res/shaders/cube.shader");
-        m_Shader = CreateShader(source.VertexSource, source.FragmentSource);
-        GL_CALL(glUseProgram(m_Shader));
+        m_Graphics.Shader = CreateShader(source.VertexSource, source.FragmentSource);
+        GL_CALL(glUseProgram(m_Graphics.Shader));
+
+        // Fetch uniform locations
+        m_Uniforms.ViewProjection = glGetUniformLocation(m_Graphics.Shader, "u_ViewProjection");
+        m_Uniforms.Color = glGetUniformLocation(m_Graphics.Shader, "u_Color");
 
         GL_CALL(glEnable(GL_DEPTH_TEST));
         GL_CALL(glEnable(GL_CULL_FACE));
@@ -106,11 +110,9 @@ protected:
         glm::mat4 mvp = projection * view * model;
 
         // Upload to shader
-        GL_CALL(glUseProgram(m_Shader));
-        int32_t umvp = glGetUniformLocation(m_Shader, "u_ViewProjection");
-        GL_CALL(glUniformMatrix4fv(umvp, 1, GL_FALSE, glm::value_ptr(mvp)));
-        int32_t color = glGetUniformLocation(m_Shader, "u_Color");
-        GL_CALL(glUniform3f(color, m_Cube.Color.r, m_Cube.Color.g, m_Cube.Color.b));
+        GL_CALL(glUseProgram(m_Graphics.Shader));
+        GL_CALL(glUniformMatrix4fv(m_Uniforms.ViewProjection, 1, GL_FALSE, glm::value_ptr(mvp)));
+        GL_CALL(glUniform3f(m_Uniforms.Color, m_Cube.Color.r, m_Cube.Color.g, m_Cube.Color.b));
     }
 
     void UpdateCamera()
@@ -148,31 +150,41 @@ protected:
     virtual void OnRender()
     {
         GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-        GL_CALL(glBindVertexArray(m_VertexArray));
+        GL_CALL(glBindVertexArray(m_Graphics.VertexArray));
         GL_CALL(glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr));
     }
 
     virtual void OnDestroy()
     {
-        GL_CALL(glDeleteProgram(m_Shader));
-        GL_CALL(glDeleteVertexArrays(1, &m_VertexArray));
-        GL_CALL(glDeleteBuffers(1, &m_VertexBuffer));
-        GL_CALL(glDeleteBuffers(1, &m_IndexBuffer));
+        GL_CALL(glDeleteProgram(m_Graphics.Shader));
+        GL_CALL(glDeleteVertexArrays(1, &m_Graphics.VertexArray));
+        GL_CALL(glDeleteBuffers(1, &m_Graphics.VertexBuffer));
+        GL_CALL(glDeleteBuffers(1, &m_Graphics.IndexBuffer));
     }
 
 private:
     Camera m_Camera;
 
-    struct Cube {
+    struct Cube
+    {
         float Angle = 0.0f;
         glm::vec3 Axis = glm::vec3(0.5f, 1.0f, 0.3f);
         glm::vec3 Color = glm::vec3(0.2f, 0.2f, 0.2f);
     } m_Cube;
 
-    uint32_t m_Shader = 0;
-    uint32_t m_VertexArray = 0;
-    uint32_t m_VertexBuffer = 0;
-    uint32_t m_IndexBuffer = 0;
+    struct Graphics
+    {
+        uint32_t Shader = 0;
+        uint32_t VertexArray = 0;
+        uint32_t VertexBuffer = 0;
+        uint32_t IndexBuffer = 0;
+    } m_Graphics;
+
+    struct Uniforms
+    {
+        int32_t ViewProjection = -1;
+        int32_t Color = -1;
+    } m_Uniforms;
 };
 
 int main()
