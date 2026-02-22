@@ -1,9 +1,6 @@
 ﻿#include <iostream>
-#include <array>
 
 #include <glm/glm.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "core/log.h"
@@ -35,6 +32,15 @@ public:
 protected:
     virtual void OnInit()
     {
+        // Generate a 10x10 grid of cubes
+        constexpr int32_t gridSize = 10;
+        constexpr float spacing = 1.0f;
+        constexpr float offset = (gridSize - 1) * spacing * 0.5f;
+
+        for (int x = 0; x < gridSize; ++x)
+            for (int z = 0; z < gridSize; ++z)
+                m_Grid.emplace_back(glm::vec3(x, 0.0f, z) * spacing - offset);
+
         // Generate and upload cube mesh to the GPU
         GenerateCube(m_Cube);
         m_Graphics.Cube = CreateMesh(m_Cube);
@@ -61,23 +67,7 @@ protected:
 
     virtual void OnUpdate()
     {
-        constexpr float fov = glm::radians(45.0f);
-        const float aspect = (float)m_WindowWidth / m_WindowHeight;
-        const float znear = 0.1f, zfar = 100.0f;
-
         UpdateCamera();
-
-        // Projection matrix
-        glm::mat4 projection = glm::perspective(fov, aspect, 0.1f, 100.0f);
-        // View matrix
-        glm::mat4 view = glm::lookAt(m_Camera.Pos, m_Camera.Pos + m_Camera.Dir, m_Camera.Up);
-        // Cube rotation (disabled for now)
-        glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 mvp = projection * view * model;
-
-        // Upload to shader
-        GL_CALL(glUseProgram(m_Graphics.Shader));
-        GL_CALL(glUniformMatrix4fv(m_Uniforms.ViewProjection, 1, GL_FALSE, glm::value_ptr(mvp)));
     }
 
     void UpdateCamera()
@@ -117,8 +107,23 @@ protected:
         GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GL_CALL(glActiveTexture(GL_TEXTURE0));
         GL_CALL(glBindTexture(GL_TEXTURE_2D, m_Graphics.Texture.Index));
+        GL_CALL(glUseProgram(m_Graphics.Shader));
         GL_CALL(glBindVertexArray(m_Graphics.Cube.VertexArray));
-        GL_CALL(glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr));
+
+        // Compute view and projection matrices
+        constexpr float fov = glm::radians(45.0f);
+        const float aspect = (float)m_WindowWidth / m_WindowHeight;
+        glm::mat4 projection = glm::perspective(fov, aspect, 0.1f, 100.0f);
+        glm::mat4 view = glm::lookAt(m_Camera.Pos, m_Camera.Pos + m_Camera.Dir, m_Camera.Up);
+
+        // Draw each cube in a grid
+        for (const auto& position : m_Grid)
+        {
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
+            glm::mat4 mvp = projection * view * model;
+            glUniformMatrix4fv(m_Uniforms.ViewProjection, 1, GL_FALSE, glm::value_ptr(mvp));
+            GL_CALL(glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr));
+        }
     }
 
     virtual void OnDestroy()
@@ -133,6 +138,9 @@ protected:
 private:
     Camera m_Camera;
     Mesh m_Cube;
+
+    using Grid = std::vector<glm::vec3>;
+    Grid m_Grid;
 
     struct Graphics
     {
